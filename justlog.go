@@ -9,7 +9,9 @@ func Die(format string, args ...interface{}) {
 }
 
 type LoggerConfig struct {
-	Level string
+	Level      string
+	TimeFormat string
+	ShowNoTime bool
 }
 
 type Logger interface {

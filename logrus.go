@@ -1,6 +1,7 @@
 package justlog
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"time"
@@ -9,16 +10,17 @@ import (
 )
 
 var (
-	stringLevelTrace = []byte("TRC")
-	stringLevelDebug = []byte("DBG")
-	stringLevelInfo  = []byte("INF")
-	stringLevelWarn  = []byte("WRN")
-	stringLevelErr   = []byte("ERR")
-	stringLevelFatal = []byte("DIE")
-	stringLevelWTF   = []byte("WTF")
+	stringLevelTrace = []byte("[TRC]")
+	stringLevelDebug = []byte("[DBG]")
+	stringLevelInfo  = []byte("[INF]")
+	stringLevelWarn  = []byte("[WRN]")
+	stringLevelError = []byte("[ERR]")
+	stringLevelFatal = []byte("[ERR][FATAL]")
+	stringLevelWTF   = []byte("[WTF]")
 )
 
 func NewLogrusLogger(cfg LoggerConfig) (*LogrusBasedLogger, error) {
+
 	logger := &LogrusBasedLogger{
 		Log: logrus.New(),
 	}
@@ -33,16 +35,17 @@ func NewLogrusLogger(cfg LoggerConfig) (*LogrusBasedLogger, error) {
 	}
 	logger.Log.SetLevel(logLevel)
 
-	fmtr := LogrusFormatter{
-		PrevTime: time.Now(),
-	}
-	logger.Log.SetFormatter(&fmtr)
+	fmtr := NewLogrusFormatter(&cfg)
+	logger.Log.SetFormatter(fmtr)
+
+	logger.LogEntry = logrus.NewEntry(logger.Log)
 
 	return logger, nil
 }
 
 type LogrusBasedLogger struct {
-	Log *logrus.Logger
+	Log      *logrus.Logger
+	LogEntry *logrus.Entry
 }
 
 func (logger *LogrusBasedLogger) SetOutput(out io.Writer) {
@@ -50,75 +53,99 @@ func (logger *LogrusBasedLogger) SetOutput(out io.Writer) {
 }
 
 func (logger *LogrusBasedLogger) Trace(args ...interface{}) {
-	logger.Log.Trace(args...)
+	logger.LogEntry.Trace(args...)
 }
 
 func (logger *LogrusBasedLogger) Tracef(format string, args ...interface{}) {
-	logger.Log.Tracef(format, args...)
+	logger.LogEntry.Tracef(format, args...)
 }
 
 func (logger *LogrusBasedLogger) Debug(args ...interface{}) {
-	logger.Log.Debug(args...)
+	logger.LogEntry.Debug(args...)
 }
 
 func (logger *LogrusBasedLogger) Debugf(format string, args ...interface{}) {
-	logger.Log.Debugf(format, args...)
+	logger.LogEntry.Debugf(format, args...)
 }
 
 func (logger *LogrusBasedLogger) Info(args ...interface{}) {
-	logger.Log.Info(args...)
+	logger.LogEntry.Info(args...)
 }
 
 func (logger *LogrusBasedLogger) Infof(format string, args ...interface{}) {
-	logger.Log.Infof(format, args...)
+	logger.LogEntry.Infof(format, args...)
 }
 
 func (logger *LogrusBasedLogger) Warn(args ...interface{}) {
-	logger.Log.Warn(args...)
+	logger.LogEntry.Warn(args...)
 }
 
 func (logger *LogrusBasedLogger) Warnf(format string, args ...interface{}) {
-	logger.Log.Warnf(format, args...)
+	logger.LogEntry.Warnf(format, args...)
 }
 
 func (logger *LogrusBasedLogger) Error(args ...interface{}) {
-	logger.Log.Error(args...)
+	logger.LogEntry.Error(args...)
 }
 
 func (logger *LogrusBasedLogger) Errorf(format string, args ...interface{}) {
-	logger.Log.Errorf(format, args...)
+	logger.LogEntry.Errorf(format, args...)
 }
 
 func (logger *LogrusBasedLogger) Fatal(args ...interface{}) {
-	logger.Log.Fatal(args...)
+	logger.LogEntry.Fatal(args...)
 }
 
 func (logger *LogrusBasedLogger) Fatalf(format string, args ...interface{}) {
-	logger.Log.Fatalf(format, args...)
+	logger.LogEntry.Fatalf(format, args...)
 }
 
 type LogrusFormatter struct {
-	PrevTime time.Time
+	PrevTime   time.Time
+	TimeFormat string
+	ShowNoTime bool
+}
+
+func NewLogrusFormatter(cfg *LoggerConfig) *LogrusFormatter {
+	f := &LogrusFormatter{
+		TimeFormat: "2006-01-02 15:04:05.000000",
+		PrevTime:   time.Now(),
+	}
+
+	if cfg == nil {
+		return f
+	}
+
+	if cfg.TimeFormat != "" {
+		f.TimeFormat = cfg.TimeFormat
+	}
+	f.ShowNoTime = cfg.ShowNoTime
+
+	return f
 }
 
 func (f *LogrusFormatter) Format(ent *logrus.Entry) ([]byte, error) {
-	buf := make([]byte, 0, 0) // FIXME: use ent.Buffer
+	buf := ent.Buffer
+	if buf == nil {
+		buf = &bytes.Buffer{}
+	}
 
 	sinceLastLog := ent.Time.Sub(f.PrevTime) // FIXME: store time with atomic
-	f.PrevTime = ent.Time                    // TODO: cover with tests
+	f.PrevTime = ent.Time
 
-	buf = append(buf, ent.Time.Format("2006-01-02 15:04:05.000000")...)
-	buf = append(buf, "[+"...)
-	buf = append(buf, f.durationSecondsString(sinceLastLog)...)
-	buf = append(buf, ']')
-	buf = append(buf, ' ')
-	buf = append(buf, '[')
-	buf = append(buf, logLevelString(ent.Level)...)
-	buf = append(buf, ']')
-	buf = append(buf, ' ')
-	buf = append(buf, ent.Message...)
-	buf = append(buf, '\n')
-	return buf, nil
+	if !f.ShowNoTime {
+		buf.WriteString(ent.Time.Format(f.TimeFormat))
+	}
+
+	buf.WriteString("[+")
+	buf.WriteString(f.durationSecondsString(sinceLastLog))
+	buf.WriteRune(']')
+	buf.WriteRune(' ')
+	buf.Write(logLevelString(ent.Level))
+	buf.WriteRune(' ')
+	buf.WriteString(ent.Message)
+	buf.WriteRune('\n')
+	return buf.Bytes(), nil
 }
 
 func (f *LogrusFormatter) durationSecondsString(d time.Duration) string {
@@ -127,10 +154,14 @@ func (f *LogrusFormatter) durationSecondsString(d time.Duration) string {
 
 func logLevelString(lvl logrus.Level) []byte {
 	switch lvl {
+	case logrus.TraceLevel:
+		return stringLevelTrace
 	case logrus.DebugLevel:
 		return stringLevelDebug
 	case logrus.InfoLevel:
 		return stringLevelInfo
+	case logrus.ErrorLevel:
+		return stringLevelError
 	case logrus.FatalLevel:
 		return stringLevelFatal
 	}
