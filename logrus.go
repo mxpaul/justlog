@@ -9,16 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	stringLevelTrace = []byte("[TRC]")
-	stringLevelDebug = []byte("[DBG]")
-	stringLevelInfo  = []byte("[INF]")
-	stringLevelWarn  = []byte("[WRN]")
-	stringLevelError = []byte("[ERR]")
-	stringLevelFatal = []byte("[ERR][FATAL]")
-	stringLevelWTF   = []byte("[WTF]")
-)
-
 func NewLogrusLogger(cfg LoggerConfig) (*LogrusBasedLogger, error) {
 
 	logger := &LogrusBasedLogger{

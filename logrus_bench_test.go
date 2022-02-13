@@ -24,6 +24,25 @@ ok      github.com/mxpaul/justlog       3.618s
 
 */
 
+func BenchmarkJustlogFmt(b *testing.B) {
+	logger, err := NewFmtBasedLogger(LoggerConfig{})
+	if err != nil {
+		b.Fail()
+		return
+	}
+
+	var out bytes.Buffer
+	logger.SetOutput(&out)
+
+	for i := 0; i < b.N; i++ {
+		logger.Tracef("format %s", "trace")
+		logger.Debugf("format %s", "debug")
+		logger.Infof("format %s", "info")
+		logger.Warnf("format %s", "warn")
+		logger.Errorf("format %s", "error")
+	}
+}
+
 func BenchmarkJustlog(b *testing.B) {
 	logger, err := NewLogrusLogger(LoggerConfig{})
 	if err != nil {
