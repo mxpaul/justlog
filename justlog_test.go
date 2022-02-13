@@ -69,6 +69,20 @@ func (tc TestCase_Logger) Run(t *testing.T) {
 			logger.Error(call.Args...)
 		case "Fatal":
 			logger.Fatal(call.Args...)
+		case "Tracef":
+			logger.Tracef(call.Format, call.Args...)
+		case "Debugf":
+			logger.Debugf(call.Format, call.Args...)
+		case "Infof":
+			logger.Infof(call.Format, call.Args...)
+		case "Printf":
+			logger.Printf(call.Format, call.Args...)
+		case "Warnf":
+			logger.Warnf(call.Format, call.Args...)
+		case "Errorf":
+			logger.Errorf(call.Format, call.Args...)
+		case "Fatalf":
+			logger.Fatalf(call.Format, call.Args...)
 		default:
 			assert.Failf(t, "method %q", call.Method)
 			return
@@ -85,6 +99,22 @@ func Test_LogrusBasedLogger_Trace_LevelTrace(t *testing.T) {
 	TestCase_Logger{
 		Calls: TestLoggerCalls{
 			{Method: "Trace", Args: []interface{}{"log message"}},
+		},
+		Config: &LoggerConfig{
+			Level: "trace",
+		},
+		TimeSequence: []time.Time{
+			time.Date(2021, time.Month(2), 1, 3, 4, 3, 8000000, time.UTC),
+			time.Date(2021, time.Month(2), 1, 3, 4, 5, 9000000, time.UTC),
+		},
+		WantOutput: "2021-02-01 03:04:05.009000[+2.001000] [TRC] log message\n",
+	}.Run(t)
+}
+
+func Test_LogrusBasedLogger_Tracef_LevelTrace(t *testing.T) {
+	TestCase_Logger{
+		Calls: TestLoggerCalls{
+			{Method: "Tracef", Format: "log %s", Args: []interface{}{"message"}},
 		},
 		Config: &LoggerConfig{
 			Level: "trace",
@@ -125,10 +155,40 @@ func Test_LogrusBasedLogger_Debug_LevelDebug(t *testing.T) {
 	}.Run(t)
 }
 
+func Test_LogrusBasedLogger_Debugf_LevelDebug(t *testing.T) {
+	TestCase_Logger{
+		Calls: TestLoggerCalls{
+			{Method: "Debugf", Format: "log %s", Args: []interface{}{"message"}},
+		},
+		Config: &LoggerConfig{
+			Level: "debug",
+		},
+		TimeSequence: []time.Time{
+			time.Date(2021, time.Month(2), 1, 3, 4, 3, 8000000, time.UTC),
+			time.Date(2021, time.Month(2), 1, 3, 4, 5, 9000000, time.UTC),
+		},
+		WantOutput: "2021-02-01 03:04:05.009000[+2.001000] [DBG] log message\n",
+	}.Run(t)
+}
+
 func Test_LogrusBasedLogger_Info_LevelDefault(t *testing.T) {
 	TestCase_Logger{
 		Calls: TestLoggerCalls{
 			{Method: "Info", Args: []interface{}{"log message"}},
+		},
+		Config: &LoggerConfig{},
+		TimeSequence: []time.Time{
+			time.Date(2021, time.Month(2), 1, 3, 4, 3, 8000000, time.UTC),
+			time.Date(2021, time.Month(2), 1, 3, 4, 5, 9000000, time.UTC),
+		},
+		WantOutput: "2021-02-01 03:04:05.009000[+2.001000] [INF] log message\n",
+	}.Run(t)
+}
+
+func Test_LogrusBasedLogger_Infof_LevelDefault(t *testing.T) {
+	TestCase_Logger{
+		Calls: TestLoggerCalls{
+			{Method: "Infof", Format: "log %s", Args: []interface{}{"message"}},
 		},
 		Config: &LoggerConfig{},
 		TimeSequence: []time.Time{
@@ -153,6 +213,20 @@ func Test_LogrusBasedLogger_Print_LevelDefault(t *testing.T) {
 	}.Run(t)
 }
 
+func Test_LogrusBasedLogger_Printf_LevelDefault(t *testing.T) {
+	TestCase_Logger{
+		Calls: TestLoggerCalls{
+			{Method: "Printf", Format: "log %s", Args: []interface{}{"message"}},
+		},
+		Config: &LoggerConfig{},
+		TimeSequence: []time.Time{
+			time.Date(2021, time.Month(2), 1, 3, 4, 3, 8000000, time.UTC),
+			time.Date(2021, time.Month(2), 1, 3, 4, 5, 9000000, time.UTC),
+		},
+		WantOutput: "2021-02-01 03:04:05.009000[+2.001000] [INF] log message\n",
+	}.Run(t)
+}
+
 func Test_LogrusBasedLogger_Error_LevelDefault(t *testing.T) {
 	TestCase_Logger{
 		Calls: TestLoggerCalls{
@@ -167,10 +241,41 @@ func Test_LogrusBasedLogger_Error_LevelDefault(t *testing.T) {
 	}.Run(t)
 }
 
+func Test_LogrusBasedLogger_Errorf_LevelDefault(t *testing.T) {
+	TestCase_Logger{
+		Calls: TestLoggerCalls{
+			{Method: "Errorf", Format: "log %s", Args: []interface{}{"message"}},
+		},
+		Config: &LoggerConfig{},
+		TimeSequence: []time.Time{
+			time.Date(2021, time.Month(2), 1, 3, 4, 3, 8000000, time.UTC),
+			time.Date(2021, time.Month(2), 1, 3, 4, 5, 9000000, time.UTC),
+		},
+		WantOutput: "2021-02-01 03:04:05.009000[+2.001000] [ERR] log message\n",
+	}.Run(t)
+}
+
 func Test_LogrusBasedLogger_Fatal_LevelInfo(t *testing.T) {
 	TestCase_Logger{
 		Calls: TestLoggerCalls{
 			{Method: "Fatal", Args: []interface{}{"log message"}},
+		},
+		Config: &LoggerConfig{
+			Level: "info",
+		},
+		TimeSequence: []time.Time{
+			time.Date(2021, time.Month(2), 1, 3, 4, 3, 8000000, time.UTC),
+			time.Date(2021, time.Month(2), 1, 3, 4, 5, 9000000, time.UTC),
+		},
+		WantOutput: "2021-02-01 03:04:05.009000[+2.001000] [ERR][FATAL] log message\n",
+		WantExit:   true,
+	}.Run(t)
+}
+
+func Test_LogrusBasedLogger_Fatalf_LevelInfo(t *testing.T) {
+	TestCase_Logger{
+		Calls: TestLoggerCalls{
+			{Method: "Fatalf", Format: "log %s", Args: []interface{}{"message"}},
 		},
 		Config: &LoggerConfig{
 			Level: "info",
