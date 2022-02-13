@@ -124,6 +124,14 @@ func (logger *FmtBasedLogger) Infof(format string, args ...interface{}) {
 	logger.WriteMessagef(LogLevelInfo, time.Now(), format, args...)
 }
 
+func (logger *FmtBasedLogger) Print(args ...interface{}) {
+	logger.WriteMessage(LogLevelInfo, time.Now(), args...)
+}
+
+func (logger *FmtBasedLogger) Printf(format string, args ...interface{}) {
+	logger.WriteMessagef(LogLevelInfo, time.Now(), format, args...)
+}
+
 func (logger *FmtBasedLogger) Warn(args ...interface{}) {
 	logger.WriteMessage(LogLevelWarn, time.Now(), args...)
 }

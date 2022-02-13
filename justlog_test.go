@@ -54,6 +54,8 @@ func (tc TestCase_Logger) Run(t *testing.T) {
 		logger.Debug(tc.Args...)
 	case "Info":
 		logger.Info(tc.Args...)
+	case "Print":
+		logger.Print(tc.Args...)
 	case "Warn":
 		logger.Warn(tc.Args...)
 	case "Error":
@@ -111,6 +113,17 @@ func Test_LogrusBasedLogger_Debug_LevelDebug(t *testing.T) {
 func Test_LogrusBasedLogger_Info_LevelDefault(t *testing.T) {
 	TestCase_Logger{
 		Method:      "Info",
+		Config:      &LoggerConfig{},
+		Args:        []interface{}{"log message"},
+		PrevLogTime: time.Date(2021, time.Month(2), 1, 3, 4, 3, 8000000, time.UTC),
+		LogTime:     time.Date(2021, time.Month(2), 1, 3, 4, 5, 9000000, time.UTC),
+		WantOutput:  "2021-02-01 03:04:05.009000[+2.001000] [INF] log message\n",
+	}.Run(t)
+}
+
+func Test_LogrusBasedLogger_Print_LevelDefault(t *testing.T) {
+	TestCase_Logger{
+		Method:      "Print",
 		Config:      &LoggerConfig{},
 		Args:        []interface{}{"log message"},
 		PrevLogTime: time.Date(2021, time.Month(2), 1, 3, 4, 3, 8000000, time.UTC),

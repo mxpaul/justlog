@@ -66,6 +66,14 @@ func (logger *LogrusBasedLogger) Infof(format string, args ...interface{}) {
 	logger.LogEntry.Infof(format, args...)
 }
 
+func (logger *LogrusBasedLogger) Print(args ...interface{}) {
+	logger.LogEntry.Info(args...)
+}
+
+func (logger *LogrusBasedLogger) Printf(format string, args ...interface{}) {
+	logger.LogEntry.Infof(format, args...)
+}
+
 func (logger *LogrusBasedLogger) Warn(args ...interface{}) {
 	logger.LogEntry.Warn(args...)
 }
