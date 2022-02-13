@@ -2,6 +2,7 @@ package justlog
 
 import (
 	"bytes"
+	"log"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -80,5 +81,18 @@ func BenchmarkLogrusNativeEntry(b *testing.B) {
 		entry.Infof("format %s", "info")
 		entry.Warnf("format %s", "warn")
 		entry.Errorf("format %s", "error")
+	}
+}
+
+func BenchmarkGolangLogNative(b *testing.B) {
+	var out bytes.Buffer
+	logger := log.New(&out, "12345", log.LstdFlags|log.Lmicroseconds)
+
+	for i := 0; i < b.N; i++ {
+		logger.Printf("format %s", "trace")
+		logger.Printf("format %s", "debug")
+		logger.Printf("format %s", "info")
+		logger.Printf("format %s", "warn")
+		logger.Printf("format %s", "error")
 	}
 }
