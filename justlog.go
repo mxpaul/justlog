@@ -29,6 +29,6 @@ type Logger interface {
 	Fatalf(format string, args ...interface{})
 }
 
-func NewLogger(cfg LoggerConfig) (Logger, error) {
+func NewLogger(cfg LoggerConfig) (*LogrusBasedLogger, error) {
 	return NewLogrusLogger(cfg)
 }
