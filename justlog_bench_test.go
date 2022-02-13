@@ -24,7 +24,7 @@ ok      github.com/mxpaul/justlog       3.618s
 
 */
 
-func BenchmarkJustlogFmt(b *testing.B) {
+func BenchmarkFmtBasedLogger(b *testing.B) {
 	logger, err := NewFmtBasedLogger(LoggerConfig{})
 	if err != nil {
 		b.Fail()
@@ -43,7 +43,7 @@ func BenchmarkJustlogFmt(b *testing.B) {
 	}
 }
 
-func BenchmarkJustlog(b *testing.B) {
+func BenchmarkLogrusBasedLogger(b *testing.B) {
 	logger, err := NewLogrusLogger(LoggerConfig{})
 	if err != nil {
 		b.Fail()
@@ -103,7 +103,7 @@ func BenchmarkLogrusNativeEntry(b *testing.B) {
 	}
 }
 
-func BenchmarkGolangLogNative(b *testing.B) {
+func BenchmarkGolangLogStd(b *testing.B) {
 	var out bytes.Buffer
 	logger := log.New(&out, "12345", log.LstdFlags|log.Lmicroseconds)
 
