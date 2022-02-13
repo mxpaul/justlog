@@ -15,13 +15,13 @@ goos: linux
 goarch: amd64
 pkg: github.com/mxpaul/justlog
 cpu: Intel(R) Core(TM) i7-1065G7 CPU @ 1.30GHz
-BenchmarkFmtBasedLogger-8                 362210              3140 ns/op            1163 B/op         15 allocs/op
-BenchmarkLogrusBasedLogger-8              307906              3787 ns/op            1176 B/op         24 allocs/op
-BenchmarkLogrusNativeLogger-8             208219              5546 ns/op            2110 B/op         54 allocs/op
-BenchmarkLogrusNativeEntry-8              219136              5412 ns/op            1936 B/op         51 allocs/op
-BenchmarkGolangLogStd-8                   733635              1621 ns/op             700 B/op          5 allocs/op
+BenchmarkFmtBasedLogger-8                 451280              2559 ns/op             845 B/op         12 allocs/op
+BenchmarkLogrusBasedLogger-8              306254              3752 ns/op            1179 B/op         24 allocs/op
+BenchmarkLogrusNativeLogger-8             213375              5484 ns/op            2095 B/op         54 allocs/op
+BenchmarkLogrusNativeEntry-8              216452              5279 ns/op            1943 B/op         51 allocs/op
+BenchmarkGolangLogStd-8                   724714              1615 ns/op             708 B/op          5 allocs/op
 PASS
-ok      github.com/mxpaul/justlog       6.056s
+ok      github.com/mxpaul/justlog       6.000s
 
 */
 

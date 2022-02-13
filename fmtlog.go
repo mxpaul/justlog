@@ -8,6 +8,49 @@ import (
 	"time"
 )
 
+func timeFormatFuncCommon(buf []byte, t time.Time, format string) []byte {
+	return append(buf, t.Format(format)...)
+}
+
+// stolen from log package
+func itoa(buf []byte, i int, wid int) []byte {
+	// Assemble decimal in reverse order.
+	var b [20]byte
+	bp := len(b) - 1
+	for i >= 10 || wid > 1 {
+		wid--
+		q := i / 10
+		b[bp] = byte('0' + i - q*10)
+		bp--
+		i = q
+	}
+	// i < 10
+	b[bp] = byte('0' + i)
+	return append(buf, b[bp:]...)
+}
+
+// stolen from log package
+func timeFormatFuncDefaultCustomized(buf []byte, t time.Time, _ string) []byte {
+	year, month, day := t.Date()
+	buf = itoa(buf, year, 4)
+	buf = append(buf, '-')
+	buf = itoa(buf, int(month), 2)
+	buf = append(buf, '-')
+	buf = itoa(buf, day, 2)
+	buf = append(buf, ' ')
+
+	hour, min, sec := t.Clock()
+	buf = itoa(buf, hour, 2)
+	buf = append(buf, ':')
+	buf = itoa(buf, min, 2)
+	buf = append(buf, ':')
+	buf = itoa(buf, sec, 2)
+
+	buf = append(buf, '.')
+	buf = itoa(buf, t.Nanosecond()/1e3, 6)
+	return buf
+}
+
 func NewFmtBasedLogger(cfg LoggerConfig) (*FmtBasedLogger, error) {
 	logLevel, err := ParseLogLevel(cfg.Level)
 	if err != nil {
@@ -15,52 +58,58 @@ func NewFmtBasedLogger(cfg LoggerConfig) (*FmtBasedLogger, error) {
 	}
 
 	logger := &FmtBasedLogger{
-		TimeFormat: "2006-01-02 15:04:05.000000",
-		PrevTime:   time.Now(),
-		ShowNoTime: cfg.ShowNoTime,
-		Level:      logLevel,
-		Out:        os.Stderr,
+		TimeFormat:     DefaultTimeFormat,
+		PrevTime:       time.Now(),
+		ShowNoTime:     cfg.ShowNoTime,
+		Level:          logLevel,
+		Out:            os.Stderr,
+		timeFormatFunc: timeFormatFuncCommon,
 	}
 
 	if cfg.TimeFormat != "" {
 		logger.TimeFormat = cfg.TimeFormat
 	}
 
+	if logger.TimeFormat == DefaultTimeFormat {
+		logger.timeFormatFunc = timeFormatFuncDefaultCustomized
+	}
+
 	return logger, nil
 }
 
 type FmtBasedLogger struct {
-	PrevTime   time.Time
-	TimeFormat string
-	ShowNoTime bool
-	Level      Level
-	Out        io.Writer
-	outMu      sync.Mutex
+	PrevTime       time.Time
+	TimeFormat     string
+	ShowNoTime     bool
+	Level          Level
+	Out            io.Writer
+	outMu          sync.Mutex
+	timeFormatFunc func([]byte, time.Time, string) []byte
 }
 
 func (logger *FmtBasedLogger) WriteMessage(Level Level, Time time.Time, args ...interface{}) {
 	if logger.Level > Level {
 		return
 	}
-	buf := make([]byte, 0, 200)
 	msg := logger.MessageBytes(nil, args...)
+	buf := make([]byte, 0, len(msg)+45)
 	buf = logger.FormatMessage(buf, msg, Level, Time)
 	logger.outMu.Lock()
+	defer logger.outMu.Unlock()
 	logger.Out.Write(buf)
-	logger.outMu.Unlock()
 }
 
 func (logger *FmtBasedLogger) WriteMessagef(Level Level, Time time.Time, format string, args ...interface{}) {
 	if logger.Level > Level {
 		return
 	}
-	buf := make([]byte, 0, 200)
 	msg := []byte(fmt.Sprintf(format, args...))
+	buf := make([]byte, 0, len(msg)+45)
 	buf = logger.FormatMessage(buf, msg, Level, Time)
 
 	logger.outMu.Lock()
+	defer logger.outMu.Unlock()
 	logger.Out.Write(buf)
-	logger.outMu.Unlock()
 }
 
 func (logger *FmtBasedLogger) FormatMessage(buf []byte, Message []byte, Level Level, Time time.Time) []byte {
@@ -68,11 +117,11 @@ func (logger *FmtBasedLogger) FormatMessage(buf []byte, Message []byte, Level Le
 	logger.PrevTime = Time
 
 	if !logger.ShowNoTime {
-		buf = append(buf, Time.Format(logger.TimeFormat)...)
+		buf = logger.timeFormatFunc(buf, Time, logger.TimeFormat)
 	}
 
 	buf = append(buf, "[+"...)
-	buf = append(buf, fmt.Sprintf("%.6f", sinceLastLog.Seconds())...)
+	buf = append(buf, fmt.Sprintf("%.6f", sinceLastLog.Seconds())...) // FIXME: split for seconds and nanoseconds, use itoa
 	buf = append(buf, ']')
 	buf = append(buf, ' ')
 	buf = append(buf, logLevelStringLocal(Level)...)
