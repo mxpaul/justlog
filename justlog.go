@@ -2,6 +2,7 @@ package justlog
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/sirupsen/logrus"
 )
@@ -97,4 +98,50 @@ type Logger interface {
 
 func NewLogger(cfg LoggerConfig) (*FmtBasedLogger, error) {
 	return NewFmtBasedLogger(cfg)
+}
+
+type NoopLogger struct{}
+
+func (logger *NoopLogger) Trace(args ...interface{}) {
+}
+
+func (logger *NoopLogger) Tracef(format string, args ...interface{}) {
+}
+
+func (logger *NoopLogger) Debug(args ...interface{}) {
+}
+
+func (logger *NoopLogger) Debugf(format string, args ...interface{}) {
+}
+
+func (logger *NoopLogger) Info(args ...interface{}) {
+}
+
+func (logger *NoopLogger) Infof(format string, args ...interface{}) {
+}
+
+func (logger *NoopLogger) Print(args ...interface{}) {
+}
+
+func (logger *NoopLogger) Printf(format string, args ...interface{}) {
+}
+
+func (logger *NoopLogger) Warn(args ...interface{}) {
+}
+
+func (logger *NoopLogger) Warnf(format string, args ...interface{}) {
+}
+
+func (logger *NoopLogger) Error(args ...interface{}) {
+}
+
+func (logger *NoopLogger) Errorf(format string, args ...interface{}) {
+}
+
+func (logger *NoopLogger) Fatal(args ...interface{}) {
+	os.Exit(1)
+}
+
+func (logger *NoopLogger) Fatalf(format string, args ...interface{}) {
+	os.Exit(1)
 }
